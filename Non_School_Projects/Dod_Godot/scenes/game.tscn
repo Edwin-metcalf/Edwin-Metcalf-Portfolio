@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3 uid="uid://wxcdufxvsl6x"]
+
+[ext_resource type="PackedScene" uid="uid://4kso5neytiny" path="res://scenes/player.tscn" id="1_b4igg"]
+[ext_resource type="PackedScene" uid="uid://biux7bht4ns5h" path="res://scenes/map_1.tscn" id="1_nchew"]
+[ext_resource type="PackedScene" uid="uid://bbdrgedjxkia" path="res://scenes/score_board.tscn" id="3_8jt8m"]
+[ext_resource type="PackedScene" uid="uid://dowo87oedfjjl" path="res://scenes/enemy.tscn" id="3_8opr8"]
+[ext_resource type="PackedScene" uid="uid://cg2ln66xr04e3" path="res://scenes/spawner.tscn" id="3_qa4fu"]
+
+[node name="Game" type="Node2D"]
+
+[node name="map1" parent="." instance=ExtResource("1_nchew")]
+position = Vector2(12, 20)
+
+[node name="player" parent="." instance=ExtResource("1_b4igg")]
+position = Vector2(5, -17)
+
+[node name="Camera2D" type="Camera2D" parent="player"]
+position = Vector2(-5, 17)
+offset = Vector2(2.08165e-12, -5)
+zoom = Vector2(8, 8)
+position_smoothing_enabled = true
+
+[node name="score_board" parent="player/Camera2D" instance=ExtResource("3_8jt8m")]
+position = Vector2(-63, -77)
+
+[node name="Area2D" parent="player" instance=ExtResource("3_qa4fu")]
+
+[node name="test enemy" parent="." node_paths=PackedStringArray("target_to_chase") instance=ExtResource("3_8opr8")]
+position = Vector2(82, -29)
+target_to_chase = NodePath("../player")
