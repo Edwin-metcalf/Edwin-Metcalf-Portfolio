@@ -1,0 +1,128 @@
+(*
+	CMPU-145, Spring 2024
+	Edwin Metcalf
+	Asmt. 7
+*)
+#use "asmt_helper.txt";;
+
+print_header "Asmt 7 programing" "Edwin Metcalf";;
+
+(*-----------PROP DEFINITION---------------*)
+
+type prop =
+     | True				(* True *)
+     | False 				(* False *)
+     | Var of char			(* Var'p' *)
+     | Not of prop 			(* Not(Var('p')) *)
+     | Or of prop * prop 		(* Or(Var'p',Var'q') *)
+     | And of prop * prop 		(* And(Var'p',Var'q') *)
+     | Imp of prop * prop 		(* Imp(Var'p',Var'q') *)
+     | Bimp of prop * prop 		(* Bimp(Var'p',Var'q') *)
+     ;;
+(*----------------OTHER FUNCTIONS THAT WILL BE NEEDED----------------*)
+let rec eval proppy true_letters =
+    match proppy with
+    | True -> true
+    | False -> false
+    | Var c -> List.mem c true_letters
+    | Not q -> not (eval q true_letters)
+    | And (q,r) -> (eval q true_letters) && (eval r true_letters)
+    | Or (q,r) -> (eval q true_letters) || (eval r true_letters)
+    | Imp (q,r) -> (not (eval q true_letters)) || (eval r true_letters)
+    | Bimp (q,r) -> (eval q true_letters) = (eval r true_letters);;
+
+let rec merge_unique listy listz =
+    match listy with
+    | [] -> listz
+    | (x::resty) -> if List.mem x listz then merge_unique resty listz
+                   else merge_unique resty (x::listz);;
+
+let rec fetch_letters proppy =
+    match proppy with
+    | True | False -> []
+    | Var c -> [c]
+    | Not x -> fetch_letters x
+    | Or (q,r) | And (q,r) | Imp (q,r) | Bimp (q,r)
+      -> merge_unique( fetch_letters q) ( fetch_letters r)
+      ;;
+
+let rec ps listy =
+    match listy with
+    | [] -> [[]]
+    | (x::resty) -> let ps_resty = ps resty in
+                   ps_resty @
+                   (List.map (fun subby-> x::subby) (ps resty));;
+
+let all_models proppy = List.rev(ps (fetch_letters proppy));;
+
+let rec valid_helper proposition listy =
+    match listy with
+    | [] -> true
+    | (x::resty) -> eval proposition x && valid_helper proposition resty;;
+
+let valid proppy = valid_helper proppy (all_models proppy);;
+
+let satisfiable proppy = if valid (Not(proppy)) then false
+                     else true;;
+
+(*-------------------------------------*)
+problem "PROBLEM 1: CONJOIN";;
+(*-------------------------------------*)
+
+let rec conjoin propList = 
+     match propList with 
+     | [] -> True
+     | [x] -> x
+     | (x::resty) -> And(x, (conjoin resty));;
+
+let conjoina = conjoin [Var('p'); And(Not(Var('q')),Var('r'))];;
+
+assert(conjoin [Var('p'); And(Not(Var('q')),Var('r'))] = And(Var('p'),And(Not(Var('q')),Var('r'))));;
+assert(conjoin [Var('a')] = Var('a'));;
+assert(conjoin [Var('a'); Not(Var('b'))] = And(Var('a'), Not(Var('b'))));;
+
+(*------------------------------------*)
+problem "PROBLEM 2: ENTAILS";;
+(*------------------------------------*)
+
+
+let entails kb p = not (satisfiable (conjoin (kb @ [Not(p)])));;
+
+let entailsss = entails [Var('a'); Imp(Var('a'),Var('b'))] (Var('b'));;
+assert(entails [And(Var('a'),Var('b'));Var('c')] (Var('x')) = false);;
+assert(entails  [Var('a'); Imp(Var('a'),Var('b'))] (Var('b')) = true);;
+assert(entails [Var('a')] (Var('g')) = false);;
+
+(*-------------------------------------*)
+problem "PROBLEM 3: CNF_TO_LIST";;
+(*-------------------------------------*)
+
+let rec cnf_to_list prop = 
+     match prop with
+     | And(q,r) -> (cnf_to_list q) @ (cnf_to_list r)
+     | other -> [other];;
+
+let cnftolist = cnf_to_list (And(Not(Var('p')),Or(Var('q'),Var('r'))));;
+assert(cnf_to_list (Var('a')) = [Var('a')]);;
+assert(cnf_to_list (And(Not(Var('p')),Or(Var('q'),Var('r')))) = [Not (Var 'p'); Or (Var 'q', Var 'r')]);;
+assert(cnf_to_list (Imp(Var('x'),Var('z'))) = [Imp(Var('x'),Var('z'))]);;
+
+
+(*------------------------------------*)
+problem "PROBLEM 4: CONTRADICT";;
+(*------------------------------------*)
+
+let contradict p1 p2 = 
+     match (p1, p2) with
+     | (Var(q),Not(Var(r))) -> q = r 
+     | (Not(Var(q)), Var(r)) -> q = r
+     | _ -> false;;
+
+assert(contradict  (Var('p')) (Not(Var('p'))) = true);;
+assert(contradict (Or(Var('p'),Var('q'))) (Not(Var('p'))) = false);;
+assert(contradict (Var('x')) (Not(Var('r'))) = false);;
+
+
+
+
+
